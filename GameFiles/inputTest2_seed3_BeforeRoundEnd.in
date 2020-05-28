@@ -1,0 +1,18 @@
+1
+Anthony
+Blake
+turn 1 l 2
+turn 0 u 3
+turn 4 b 3
+turn 0 r 2
+turn 5 u 1
+turn 0 r 2
+turn 0 b 3
+turn 2 u 3
+turn 0 l 0
+turn 3 y 1
+turn 0 u 1
+save inputTest2.out
+quit
+
+4

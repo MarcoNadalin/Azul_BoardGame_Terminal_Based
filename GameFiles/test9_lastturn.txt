@@ -1,0 +1,53 @@
+#TileBag
+LRBRLURUBYYBYLLRULBBBLUYBYYUBULUBBYRRRLYYBBYRY
+#BoxLid
+YBBBRRRLRBYYYYUUUURRRLLLURRRRRLLLBYYYYBBBUYYYU
+#Factories
+R...
+_
+_
+_
+_
+_
+#Seed
+5
+#Player
+m
+0
+#Pattern Line
+Y
+..
+.UU
+LLLL
+UUUUU
+#Wall
+B.RUL
+LB.RU
+.L...
+R...Y
+Y....
+#Current Score
+26
+#FloorLine
+FYRRU..
+#Player
+n
+1
+#Pattern Line
+.
+..
+RRR
+.BBB
+YYYYY
+#Wall
+B.RUL
+LB..U
+..B..
+RUL..
+.R...
+#Current Score
+9
+#FloorLine
+LL.....
+#Player Token
+0
