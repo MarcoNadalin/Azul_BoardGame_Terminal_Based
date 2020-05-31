@@ -36,18 +36,24 @@ void Game::startGame(unsigned int seed, int numPlayers, int numFactories) {
     //INITIALISE THE PLAYERS
     for(int i = 0; i < numPlayers; i++) {
         std::string name;
+        std::string isAIResponse = "";
+
+        //Create the player object with the name selected by the player
         std::cout << "Enter a name for player "<< i + 1 << std::endl;
         std::cout << "> ";
         std::cin >> name;
 
-        players.insert(players.begin(), new Player(i, name));
-        players.at(i)->setAI(false);
-    }
+        players.insert(players.end(), new Player(i, name));
 
-    players.at(0)->setAI(true);
-    players.at(1)->setAI(true);
-    players.at(2)->setAI(true);
-    players.at(3)->setAI(true);
+        //ask if this player object is an AI or not.
+        std::cout << "Is this player an AI? (y/n): " << std::endl;
+        std::cin >> isAIResponse;
+
+        if(isAIResponse == "y" || isAIResponse == "Y") {
+            players.at(i)->setAI(true);
+            std::cout << "Player " << name << " has been made an AI." << std::endl;
+        }
+    }
 
     //Start the match
     match();    
@@ -273,6 +279,10 @@ void Game::moveTilesFromFactoryToPlayerPatternLine(Player* player, int colour, i
 
 void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt) {
 
+    /*
+    * Set values to an unachievable default value. If by the end of the algorithm
+    * one of these values is still set to 100, then we know a move hasnt been calculated yet.
+    */
     *factoryId = 100;
     *colourInt = 100;
     *row = 100;
@@ -281,6 +291,11 @@ void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt
     int colourSelected = 0;
     int numTilesSelected = 0;
 
+    /*
+    * Represent the difference between the number of tiles selected
+    * and the number of free spaces on the row selected
+    * (numberOfTile - freeSpaces).
+    */
     int diffOfTilesandFreeSpaces = 100;
     int rowSelected = 100;
 
@@ -294,7 +309,7 @@ void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt
             for(int tile = 1; tile <= numColours; ++tile) {
                 int tiles = factories.at(factory)->getNumberTilesOfColour(tile);
 
-                //add checks in the if statement to see if there is a possible move to make with the colo
+                
                 if(tiles > numTilesSelected && suitableTurnFound == false) {
                     factorySelected = factory;
                     colourSelected = tile;
@@ -316,15 +331,34 @@ void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt
 
     }
 
+    /*
+    * If a suitable turn has not been found, then select the smallest amount
+    * of tiles possible and place them in the floor line.
+    */
+    if(suitableTurnFound == false) {
+
+        for(int factory = 0; factory < numFactories; ++factory) {
+            if(factories.at(factory)->getTiles()->size() > 0) {
+                for(int tile = 1; tile <= numColours; ++tile) {
+                    int tiles = factories.at(factory)->getNumberTilesOfColour(tile);
+                    
+                    if(tiles < numTilesSelected && tiles != 0) {
+                        colourSelected = tile;
+                        numTilesSelected = tiles;
+                        factorySelected = factory;
+                    }
+                }
+            }
+
+        rowSelected = 5;
+        }
+    }
+
     *factoryId = factorySelected;
     *row = rowSelected;
     *colourInt = colourSelected;
 
-    if(rowSelected == 100) {
-        *row = 5;
-    }
-
-    std::cout << "Factory: " << *factoryId << " Row : " << *row << " Colour: " << *colourInt << std::endl;
+    //std::cout << "Factory: " << *factoryId << " Row : " << *row << " Colour: " << *colourInt << std::endl;
 }
 
 /*
@@ -341,7 +375,7 @@ void Game::moveTilesFromFactoryToFloorLine(Player* player, int colour, int facto
     /*
     * If the centre factory was chosen, remove the tiles from the centre factory.
     */
-    if(factoryId == 0) {
+    if(factories.at(factoryId)->getIsCentre() == true) {
         //Move first player token to floor line
         addFirstPlayerTokenToFloorLine(player, factoryId);
         //Remove all the tiles of colour that were taken from the centre factory
@@ -352,7 +386,7 @@ void Game::moveTilesFromFactoryToFloorLine(Player* player, int colour, int facto
 void Game::moveTilesFromFactoryToCentre(int factoryId, int colour) {
     int selectedFactory = 0;
 
-    if(numFactories == 6) {
+    if(numFactories == 6 && factories.at(factoryId)->getIsCentre() == false) {
         std::string chosenCentreFactory = "";
         std::cout << "Please select which centre factory you wish to add the tiles to: " << std::endl;
         std::cin >> selectedFactory;       
@@ -551,10 +585,25 @@ void Game::printHelp() {
 }
 
 void Game::addFirstPlayerTokenToFloorLine(Player* player, int factoryId) {
-    for(int i = 0; i < numFactories; ++i) {
-        factories.at(i)->removeTilesOfColour(F);
+
+    if(factories.at(factoryId)->getNumberTilesOfColour(F) == 1) {
+        for(unsigned int i = 0; i < factories[factoryId]->getTiles()->size(); i++) {
+            if(factories[factoryId]->getTiles()->get(i)->getColour() == F) {
+                player->getMosaic()->addTileToFloorLine(factories[factoryId]->getTiles()->get(i));
+                factories[factoryId]->getTiles()->remove(i);
+            }
+        }
+        player->setHasFirstPlayerToken(true);
     }
-    player->setHasFirstPlayerToken(true);
+
+    //Remove F token from all other factories that contain it.
+    for(int factory = 0; factory < numFactories; ++factory) {
+        for(unsigned int i = 0; i < factories.at(factory)->getTiles()->size(); i++) {
+            if(factories.at(factory)->getTiles()->get(i)->getColour() == F) {
+                factories.at(factory)->getTiles()->remove(i);
+            }
+        }
+    }
 }
 
 void Game::scorePlayers(){

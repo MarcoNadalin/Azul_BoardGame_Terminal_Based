@@ -225,8 +225,8 @@ void Mosaic::printFloorLine() {
         if(colour == E) {
             std::cout << getASCIColourFromInt(colour) << "\u25FB" << RESET;
         } else {
-            //std::cout << getASCIColourFromInt(colour) << convertIntToColourChar(colour) << RESET;
-            std::cout << getASCIColourFromInt(colour) << "\u25FC" << RESET;
+            std::cout << getASCIColourFromInt(colour) << convertIntToColourChar(colour) << RESET;
+            //std::cout << getASCIColourFromInt(colour) << "\u25FC" << RESET;
         }
         std::cout << " ";
     }   
