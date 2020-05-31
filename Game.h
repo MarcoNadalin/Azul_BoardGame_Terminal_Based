@@ -18,7 +18,22 @@ class Game{
         BoxLid* boxLid;
         TileBag* bag;
 
+        
+        /*
+        * The numbers of players. Set to 2 by default.
+        */
         int numPlayers = 2;
+
+        /*
+        * The numbers of players. Set to 5 by default.
+        */
+        int numFactories = 5;
+
+        /*
+        * The numbers of colours. Set to 5 by default.
+        */
+        int numColours = 5;
+
 
         /*
         * An array which holds all the players. (MAX 2 players since NUMPLAYERS is equal to 2 in Types.h).
@@ -50,7 +65,7 @@ class Game{
         * Initialises each player
         * calls match() method.
         */
-        void startGame(unsigned int seed, int numPlayers);
+        void startGame(unsigned int seed, int numPlayers, int numFactories);
         
         /*
         * Creates each factory and populates them with tiles from the tilebag.
@@ -68,6 +83,11 @@ class Game{
         * Called each turn for each player.
         */
         void playerTurn(Player* player);
+
+        /*
+        * Called each turn for each player.
+        */
+        void playerAITurn(Player* player, int* factoryId, int* row, int* colourInt);
 
         /*
         * 

@@ -44,15 +44,15 @@ void Menu::run(unsigned int seed){
 
 void Menu::startGame(unsigned int seed) {
     int numPlayers;
+    int numFactories;
 
-    std::cout << "Enter the number of players (2 or 4 players): " << std::endl;
+    std::cout << "Enter the number of players (2, 3 or 4 players): " << std::endl;
     std::cin >> numPlayers;
 
-    if(numPlayers != 2 || numPlayers != 4) {
-        startGame(seed);
-    }
-    
-    game->startGame(seed, numPlayers);
+    std::cout << "Enter the number of factories you wish to use (5 or 6):" << std::endl;
+    std::cin >> numFactories;
+
+    game->startGame(seed, numPlayers, numFactories);
 }
 
 void Menu::loadGame(std::string filename){

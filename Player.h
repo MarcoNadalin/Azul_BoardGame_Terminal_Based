@@ -25,6 +25,8 @@ class Player{
         bool getHasFirstPlayerToken();
         void checkDirectionsAndAdd(int row, int col);
 
+        bool isAI();
+        void setAI(bool ai);
         std::string getName();
         Mosaic* getMosaic();
         
@@ -34,6 +36,7 @@ class Player{
         std::string playerName;
         Mosaic* mosaic;
         bool hasFirstPlayerToken = false;
+        bool AI = false;
         
 };
 

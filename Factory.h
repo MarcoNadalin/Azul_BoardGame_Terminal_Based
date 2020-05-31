@@ -58,6 +58,9 @@ class Factory{
         */
         LinkedList* getTiles();
 
+        void setCentre(bool isCentre);
+        bool getIsCentre();
+
         void printFactory();
 
         //SAVE STATE
@@ -72,6 +75,9 @@ class Factory{
         LinkedList* tiles;
         //If factoryId is 0, this means it's the center
         int factoryId;
+
+        bool isCentreFactory;
+
 
 };
 

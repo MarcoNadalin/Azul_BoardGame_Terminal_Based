@@ -157,9 +157,11 @@ void Mosaic::printWallRow(int row) {
         //std::cout << wall[row][col].getColour();
         int colour = wall[row][col].getColour();
         if(colour == E) {
-             std::cout << getASCIColourFromInt(colourOrder[row][col]) << "\u25A1" << RESET;
+             std::cout << getASCIColourFromInt(colourOrder[row][col]) << "\u25FB" << RESET;
         } else {
-            std::cout << getASCIColourFromInt(colourOrder[row][col]) << convertIntToColourChar(colour) << RESET;
+            //std::cout << getASCIColourFromInt(colourOrder[row][col]) << convertIntToColourChar(colour) << RESET;
+            
+            std::cout << getASCIColourFromInt(colourOrder[row][col]) << "\u25FC" << RESET;
         }
         
         std::cout << " ";
@@ -190,9 +192,9 @@ void Mosaic::printPatternLineRow(int row) {
             int rowColour = getColourOfTilesInPatternLineRow(row);
 
             if(colour == E) {
-                std::cout << getASCIColourFromInt(rowColour) << "\u25A1" << RESET;
+                std::cout << getASCIColourFromInt(rowColour) << "\u25FB" << RESET;
             } else {
-                std::cout << getASCIColourFromInt(rowColour) << convertIntToColourChar(colour) << RESET;    
+                std::cout << getASCIColourFromInt(rowColour) << "\u25FC" << RESET;    
             }
             
             if(col != row) {
@@ -221,9 +223,10 @@ void Mosaic::printFloorLine() {
         //std::cout << floorLine[i].getColour();
         int colour = floorLine[i].getColour();
         if(colour == E) {
-            std::cout << getASCIColourFromInt(colour) << "\u25A1" << RESET;
+            std::cout << getASCIColourFromInt(colour) << "\u25FB" << RESET;
         } else {
-            std::cout << getASCIColourFromInt(colour) << convertIntToColourChar(colour) << RESET;
+            //std::cout << getASCIColourFromInt(colour) << convertIntToColourChar(colour) << RESET;
+            std::cout << getASCIColourFromInt(colour) << "\u25FC" << RESET;
         }
         std::cout << " ";
     }   

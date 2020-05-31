@@ -164,3 +164,11 @@ int Factory::convertCharToColourInt(char c) {
     }
     return colourInt;
 }
+
+bool Factory::getIsCentre() {
+    return this->isCentreFactory;
+}
+
+void Factory::setCentre(bool isCentre) {
+    this->isCentreFactory = isCentre;
+}

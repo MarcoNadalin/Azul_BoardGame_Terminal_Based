@@ -67,6 +67,16 @@ std::string Player::getName(){
     return playerName;
 }
 
+void Player::setAI(bool ai) {
+    this->AI = ai;
+}
+
+bool Player::isAI() {
+    return this->AI;
+}
+
+
+
 Mosaic* Player::getMosaic(){
     //TODO
     return (*this).mosaic;

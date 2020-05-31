@@ -13,14 +13,16 @@ Game::~Game(){
     delete boxLid;
 }
 
-void Game::startGame(unsigned int seed, int numPlayers) {
+void Game::startGame(unsigned int seed, int numPlayers, int numFactories) {
 
     this->numPlayers = numPlayers;
+    this->numFactories = numFactories;
 
     bag->setSeed(seed);
     bag->initialiseTileBag();
     bag->randomise();
     initFactories();
+
     //print instructions
     std::cout << "------------------------INPUT INSTRUCTIONS------------------------------------" << std::endl;
     std::cout << "For each turn, the expected input is: turn [number1] [character] [number2] " << std::endl;
@@ -33,14 +35,19 @@ void Game::startGame(unsigned int seed, int numPlayers) {
 
     //INITIALISE THE PLAYERS
     for(int i = 0; i < numPlayers; i++) {
-        int x = i;
         std::string name;
-        std::cout << "Enter a name for player "<< x + 1 << std::endl;
+        std::cout << "Enter a name for player "<< i + 1 << std::endl;
         std::cout << "> ";
         std::cin >> name;
 
         players.insert(players.begin(), new Player(i, name));
+        players.at(i)->setAI(false);
     }
+
+    players.at(0)->setAI(true);
+    players.at(1)->setAI(true);
+    players.at(2)->setAI(true);
+    players.at(3)->setAI(true);
 
     //Start the match
     match();    
@@ -54,7 +61,7 @@ void Game::match() {
 
         //check if player has 1st turn token
         int playerToGoFirst = 0;
-        for(int j = 0; j < NUMPLAYERS; j++) {
+        for(int j = 0; j < numPlayers; j++) {
             if(players.at(j)->getHasFirstPlayerToken()) {
                 playerToGoFirst = j;
                 players.at(j)->setHasFirstPlayerToken(false);
@@ -62,7 +69,7 @@ void Game::match() {
         }
 
         while(!checkIfAllFactoriesEmpty() && quit == false){            
-            for(int i = playerToGoFirst; i< NUMPLAYERS; ++i){
+            for(int i = playerToGoFirst; i< numPlayers; ++i){
                 if(!checkIfAllFactoriesEmpty() && quit == false){
                     std::string pname = players.at(i)->getName();std::cout<<std::endl;
 
@@ -83,7 +90,7 @@ void Game::match() {
 
         if(quit == false) {
             printBoardsForAllPlayers();
-            for(int i = 0; i<NUMPLAYERS; ++i){
+            for(int i = 0; i<numPlayers; ++i){
                 moveAllPatternLinesPerPlayer(players.at(i));
             }
             printBoardsForAllPlayers();
@@ -101,7 +108,7 @@ void Game::match() {
     }
     std::cout << BOLDRED << "=== " << "END OF MATCH" << " ==="<< RESET << std::endl;
     std::cout << "Final Scores: " <<std::endl;
-    for(int i = 0; i < NUMPLAYERS; ++i) {
+    for(int i = 0; i < numPlayers; ++i) {
         std::cout << players.at(i)->getName() << ": " << players.at(i)->getScore() <<std::endl;
     }
     std::cout << "Press ENTER to return to main menu" << std::endl;
@@ -112,8 +119,14 @@ void Game::playerTurn(Player* player) {
     int colourInt;
     int row;
 
-    //User input
-    userInputForPlayerTurn(player, &factoryId, &colourInt, &row);
+    
+    if(player->isAI()) {
+        //Calculate turn if player is AI
+        playerAITurn(player, &factoryId, &row, &colourInt);
+    } else {
+        //User input if player isnt an AI
+        userInputForPlayerTurn(player, &factoryId, &colourInt, &row);
+    }    
 
     if(quit == false){
         //Checking if selected values is valid / allowed.
@@ -148,7 +161,7 @@ void Game::playerTurn(Player* player) {
             moveTilesFromFactoryToCentre(factoryId, colourInt);
             } else {
                std::cout << "You are trying to add too many tiles to the floor line" << std::endl;
-               playerTurn(player);
+               //playerTurn(player);
             }
         } 
         else if (freeSpacesOnPatternLinesRow == 0) {
@@ -182,10 +195,6 @@ void Game::moveTileFromPatternLineToWall(int row, Player* player){
         //FINDS THE CORRECT PLACE TO PUT THE COLOUR ON THE WALL
         int col = (colour + row - 1)%5;
         //SETS THE RESPECTIVE COLOURED TILE AS THE RIGHTMOST TILE IN THE PATTERNLINES
-            
-            //This was originally done by creating a new tile. This has been changed to just changing the colour of the tile
-            //on the wall.
-            //player->getMosaic()->getWall()[row][col] = *new Tile(player->getMosaic()->getPatternLines()[row][row].getColour());
         player->getMosaic()->getWall()[row][col].setColour(player->getMosaic()->getPatternLines()[row][row].getColour());
         //SETS THE COLOUR OF THE RIGHTMOST TILE TO EMPTY
         player->getMosaic()->getPatternLines()[row][row].setColour(E);
@@ -207,7 +216,7 @@ void Game::moveTilesFromFactoryToPlayerPatternLine(Player* player, int colour, i
     * Check if there is actually free space on the patternlines row 
     * Check if there will be enough room on the floor line
     */
-    if(factoryId > 0) {
+    if(factories.at(factoryId)->getIsCentre() == false) {
         if(numTilesOfColourInFactory > 0 && freeSpacesOnPatternLinesRow > 0 && numOfTilesToBeAddedToFloorLine <= freeSpacesOnFloorLine) {
             Tile* tilesToAdd = factories.at(factoryId)->getTilesOfColour(colour);
             int tilesToAddLength = numTilesOfColourInFactory;
@@ -227,7 +236,7 @@ void Game::moveTilesFromFactoryToPlayerPatternLine(Player* player, int colour, i
     /*
     * If the factory chosen was the centre
     */
-    else if (factoryId == 0) { 
+    else if (factories.at(factoryId)->getIsCentre() == true) { 
         /*
         * If centre factory is chosen,
         * check if it has first player token. If so, add it to the players floor line
@@ -262,6 +271,62 @@ void Game::moveTilesFromFactoryToPlayerPatternLine(Player* player, int colour, i
     }
 }
 
+void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt) {
+
+    *factoryId = 100;
+    *colourInt = 100;
+    *row = 100;
+
+    int factorySelected = 0;
+    int colourSelected = 0;
+    int numTilesSelected = 0;
+
+    int diffOfTilesandFreeSpaces = 100;
+    int rowSelected = 100;
+
+    bool suitableTurnFound = false;
+
+    //iterate through factories
+    for(int factory = 0; factory < numFactories; ++factory) {
+        
+        //make sure factory isnt empty
+        if(factories.at(factory)->getTiles()->size() > 0) {
+            for(int tile = 1; tile <= numColours; ++tile) {
+                int tiles = factories.at(factory)->getNumberTilesOfColour(tile);
+
+                //add checks in the if statement to see if there is a possible move to make with the colo
+                if(tiles > numTilesSelected && suitableTurnFound == false) {
+                    factorySelected = factory;
+                    colourSelected = tile;
+                    numTilesSelected = tiles;
+
+                    //loop through all rows
+                    for(int row = 0; row < 5; ++row) {
+                        int freeSpaces = player->getMosaic()->numberOfFreeSpacesOnPatternLineRow(row);
+                        int diff = freeSpaces - numTilesSelected;
+                        if(player->getMosaic()->checkPatternLineFull(row) == false && player->getMosaic()->doesWallRowContainColour(colourSelected, row) == false && diff <= diffOfTilesandFreeSpaces && (player->getMosaic()->getColourOfTilesInPatternLineRow(row) == colourSelected || player->getMosaic()->getColourOfTilesInPatternLineRow(row) == E)) {
+                            rowSelected = row;  
+                            suitableTurnFound = true;                      
+                        }
+                    }
+                }     
+            }
+            
+        }               
+
+    }
+
+    *factoryId = factorySelected;
+    *row = rowSelected;
+    *colourInt = colourSelected;
+
+    if(rowSelected == 100) {
+        *row = 5;
+    }
+
+    std::cout << "Factory: " << *factoryId << " Row : " << *row << " Colour: " << *colourInt << std::endl;
+}
+
 /*
 * This method assumes that there is enough space on the floor line 
 * and therefore, there is no need to check for it.
@@ -285,11 +350,20 @@ void Game::moveTilesFromFactoryToFloorLine(Player* player, int colour, int facto
 }
 
 void Game::moveTilesFromFactoryToCentre(int factoryId, int colour) {
-    if(factoryId != 0) {
+    int selectedFactory = 0;
+
+    if(numFactories == 6) {
+        std::string chosenCentreFactory = "";
+        std::cout << "Please select which centre factory you wish to add the tiles to: " << std::endl;
+        std::cin >> selectedFactory;       
+    }
+    
+    
+    if(factories.at(factoryId)->getIsCentre() == false) {
         LinkedList* leftOverTiles = factories.at(factoryId)->getTiles();
         for(unsigned int i = 0; i < factories.at(factoryId)->getTiles()->size(); ++i) {
             if(leftOverTiles->get(i) != nullptr && leftOverTiles->get(i)->getColour() != colour) {
-                factories.at(0)->getTiles()->addFront(leftOverTiles->get(i)); 
+                factories.at(selectedFactory)->getTiles()->addFront(leftOverTiles->get(i)); 
             }               
         }
         leftOverTiles->clear();
@@ -326,30 +400,42 @@ void Game::printBoard(Player* player) {
 }
 
 void Game::printBoardsForAllPlayers() {
-    for(int i = 0; i < NUMPLAYERS; i++) {
+    for(int i = 0; i < numPlayers; i++) {
         printBoard(players.at(i));
     }
 }
 
 void Game::initFactories(){
-    for(int i = 0; i<NUMFACTORIES; ++i){
+    for(int i = 0; i<numFactories; ++i){ 
+        if(numFactories == 6) {
+            if(i == 0 || i == 1) {
+                factories.insert(factories.end(), new Factory(i));
+                factories.at(i)->populateCentreFactory(); 
+                factories.at(i)->setCentre(true);
+            }
+            else {
+                factories.insert(factories.end(), new Factory(i));
+                factories.at(i)->populateFactory(bag);
+            }
+        } else {
+            if(i == 0) {
+                factories.insert(factories.end(), new Factory(i));
+                factories.at(i)->populateCentreFactory(); 
+            }
+            else {
+                factories.insert(factories.end(), new Factory(i));
+                factories.at(i)->populateFactory(bag);
+            }
+        }   
         
-        if(i == 0) {
-            factories.insert(factories.end(), new Factory(i));
-            factories.at(i)->populateCentreFactory(); 
-        }
-        else {
-            factories.insert(factories.end(), new Factory(i));
-            factories.at(i)->populateFactory(bag);
-        }
     }
 }
 
 void Game::repopulateFactoriesAfterRound(){
     //Check if there are enough tiles in the tile bag before refilling
     if(bag->getSize() >= 25){
-        for(int i = 0; i<NUMFACTORIES; ++i){
-            if(i == 0){
+        for(int i = 0; i<numFactories; ++i){
+            if(factories.at(i)->getIsCentre()){
                 factories.at(i)->populateCentreFactory();
             }else{
                 factories.at(i)->populateFactory(bag);
@@ -366,7 +452,7 @@ void Game::repopulateFactoriesAfterRound(){
 bool Game::gameEnd() {
     bool endGame = false;
 
-    for(int i = 0; i < NUMPLAYERS; ++i) {
+    for(int i = 0; i < numPlayers; ++i) {
        if(players.at(i)->getMosaic()->checkIfWallRowIsFull()) {
            endGame = true;
        }
@@ -380,7 +466,7 @@ bool Game::gameEnd() {
 }
 
 void Game::printFactories(){
-    for(int i = 0; i<NUMFACTORIES; ++i){
+    for(int i = 0; i<numFactories; ++i){
         factories.at(i)->printFactory();
     }
 }
@@ -406,23 +492,25 @@ void Game::userInputForPlayerTurn(Player* player, int* factoryId, int* colourInt
                 * row is less than wallsize + 1 because if the player inputs a row of 7, this indicates that the tiles 
                 * will go to the floor line 
                 */
-                if((*factoryId < NUMFACTORIES && *factoryId >= 0) && (*row <= (WALLSIZE) && *row >= 0) && *colourInt > 0 && *colourInt  < 6){
+                if((*factoryId < numFactories && *factoryId >= 0) && (*row <= (WALLSIZE) && *row >= 0) && *colourInt > 0 && *colourInt  < 6){
                     invalidInput = false;
                 }else{
                     std::cout << "factoryID must be 0-5, row must be 0-5, colour must be 1-5" << std::endl;
                     std::cin.clear();
                 }
             }
-            else if (argument == "save"){
+            else if (argument == "save" && numFactories == 5 && numPlayers == 2){
                 std::string name;
                 std::cin >> name;
                 saveGameFile(name);
+            } else if (argument == "save") {
+                std::cout << "Sorry. Saving is only available when there are 2 players and 5 factories." << std::endl;
             }
             else if(argument == "quit") {
                 this->quit = true;
                 invalidInput = false;
                 //std::cout << "Game will end in 2 turns." << std::endl;
-            } if(argument == "help") {
+            }else if(argument == "help") {
                 printHelp();
             }
             else {
@@ -463,19 +551,14 @@ void Game::printHelp() {
 }
 
 void Game::addFirstPlayerTokenToFloorLine(Player* player, int factoryId) {
-    if(factories.at(factoryId)->getNumberTilesOfColour(F) == 1) {
-        for(unsigned int i = 0; i < factories.at(factoryId)->getTiles()->size(); i++) {
-            if(factories.at(factoryId)->getTiles()->get(i)->getColour() == F) {
-                player->getMosaic()->addTileToFloorLine(factories.at(factoryId)->getTiles()->get(i));
-                factories.at(factoryId)->getTiles()->remove(i);
-            }
-        }
-        player->setHasFirstPlayerToken(true);
+    for(int i = 0; i < numFactories; ++i) {
+        factories.at(i)->removeTilesOfColour(F);
     }
+    player->setHasFirstPlayerToken(true);
 }
 
 void Game::scorePlayers(){
-    for(int i = 0; i<NUMPLAYERS; ++i){
+    for(int i = 0; i<numPlayers; ++i){
         for(int row = 0; row < WALLSIZE; ++row){
                     players.at(i)->addScore(row);
         }
@@ -573,7 +656,7 @@ void Game::saveGameFile(std::string filename){
         //saves factory
         comment = "#Factories";
         writeFile << comment << std::endl;
-        for(int i = 0; i<NUMFACTORIES; ++i){
+        for(int i = 0; i<numFactories; ++i){
             factories.at(i)->saveFactory(writeFile);
         }
 
@@ -647,7 +730,7 @@ void Game::savePlayer(std::ofstream& outStream, Player* player){
 
 //loads player and mosaic
 void Game::loadPlayer(std::fstream& readFile, unsigned int* lineNumberPtr){
-    for(int i = 0; i < NUMPLAYERS; i++) {
+    for(int i = 0; i < numPlayers; i++) {
         std::string playerName = getNextLine(readFile, lineNumberPtr);
         int playerId = std::stoi(getNextLine(readFile, lineNumberPtr));
         players.insert(players.begin(), new Player(playerId, playerName));
@@ -677,7 +760,7 @@ void Game::loadPlayer(std::fstream& readFile, unsigned int* lineNumberPtr){
 
 void Game::loadFactory(std::fstream& readFile, unsigned int* lineNumberPtr){
     int count = 0;
-    for(int i = 0; i < NUMFACTORIES; i++) {
+    for(int i = 0; i < numFactories; i++) {
         std::string factoryString = getNextLine(readFile, lineNumberPtr);
         if(factoryString[2] != '_'){
             factories.insert(factories.end(), new Factory(i));
@@ -695,7 +778,7 @@ void Game::loadFactory(std::fstream& readFile, unsigned int* lineNumberPtr){
 bool Game::checkIfAllFactoriesEmpty(){
     bool isEmpty = true;
 
-    for(int i = 0; i < NUMFACTORIES; i++) {
+    for(int i = 0; i < numFactories; i++) {
         if(factories.at(i)->getTiles()->getHead() != nullptr) {
             if(factories.at(i)->getTiles()->getHead()->getValue()->getColour() == E) {
                 factories.at(i)->getTiles()->clear();
@@ -703,7 +786,7 @@ bool Game::checkIfAllFactoriesEmpty(){
         }
     }
 
-    for(int i = 0; i< NUMFACTORIES; i++){
+    for(int i = 0; i< numFactories; i++){
         if(factories.at(i)->getTiles()->getHead() != nullptr){
             isEmpty = false;
         }
