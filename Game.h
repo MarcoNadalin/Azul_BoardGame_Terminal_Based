@@ -7,6 +7,7 @@
 #include <iterator>
 #include <sstream>
 
+
 #include "Factory.h"
 
 class Game{
@@ -87,7 +88,7 @@ class Game{
         /*
         * Called each turn for each player.
         */
-        void playerAITurn(Player* player, int* factoryId, int* row, int* colourInt);
+        void playerAITurn(Player* player, int* factoryId, int* row, int* colourInt, int* AISelectedFActory);
 
         /*
         * 
@@ -109,7 +110,7 @@ class Game{
         * @param factoryId The factory the user has selected to grab tiles from
         * @colour The colour the player has selected.
         */
-        void moveTilesFromFactoryToCentre(int factoryId, int colour);
+        void moveTilesFromFactoryToCentre(int factoryId, int colour, int AISelectedFactory);
 
         /*
         * Move tiles (excet FirstPlayerToken) from floor line of player to box lid 

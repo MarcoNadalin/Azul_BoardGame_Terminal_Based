@@ -52,6 +52,8 @@ void Game::startGame(unsigned int seed, int numPlayers, int numFactories) {
         if(isAIResponse == "y" || isAIResponse == "Y") {
             players.at(i)->setAI(true);
             std::cout << "Player " << name << " has been made an AI." << std::endl;
+        } else if (isAIResponse != "n" || isAIResponse != "N") {
+            std::cout << "Input is invalid. Player automatically set as non-ai" << std::endl;
         }
     }
 
@@ -125,10 +127,12 @@ void Game::playerTurn(Player* player) {
     int colourInt;
     int row;
 
+    int AISelectedCentreFactory = 100;
+
     
     if(player->isAI()) {
         //Calculate turn if player is AI
-        playerAITurn(player, &factoryId, &row, &colourInt);
+        playerAITurn(player, &factoryId, &row, &colourInt, &AISelectedCentreFactory);
     } else {
         //User input if player isnt an AI
         userInputForPlayerTurn(player, &factoryId, &colourInt, &row);
@@ -159,15 +163,15 @@ void Game::playerTurn(Player* player) {
             moveTilesFromFactoryToPlayerPatternLine(player, colourInt, factoryId, row);
             //if the user hasnt chosent the centre factory,
             //move left overs (if any) in factory to the centre factory
-            moveTilesFromFactoryToCentre(factoryId, colourInt);
+            moveTilesFromFactoryToCentre(factoryId, colourInt, AISelectedCentreFactory);
         } else if(row == WALLSIZE && numTilesOfColourInFactory > 0) {
             //Move tiles from factory to floor line if there is enough space.
             if(numFreeSpacesOnFloorLine >= numTilesOfColourInFactory) {
             moveTilesFromFactoryToFloorLine(player, colourInt, factoryId);
-            moveTilesFromFactoryToCentre(factoryId, colourInt);
+            moveTilesFromFactoryToCentre(factoryId, colourInt, AISelectedCentreFactory);
             } else {
                std::cout << "You are trying to add too many tiles to the floor line" << std::endl;
-               //playerTurn(player);
+               playerTurn(player);
             }
         } 
         else if (freeSpacesOnPatternLinesRow == 0) {
@@ -277,7 +281,7 @@ void Game::moveTilesFromFactoryToPlayerPatternLine(Player* player, int colour, i
     }
 }
 
-void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt) {
+void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt, int* AISelectedFactory) {
 
     /*
     * Set values to an unachievable default value. If by the end of the algorithm
@@ -308,7 +312,6 @@ void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt
         if(factories.at(factory)->getTiles()->size() > 0) {
             for(int tile = 1; tile <= numColours; ++tile) {
                 int tiles = factories.at(factory)->getNumberTilesOfColour(tile);
-
                 
                 if(tiles > numTilesSelected && suitableTurnFound == false) {
                     factorySelected = factory;
@@ -320,7 +323,7 @@ void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt
                         int freeSpaces = player->getMosaic()->numberOfFreeSpacesOnPatternLineRow(row);
                         int diff = freeSpaces - numTilesSelected;
                         if(player->getMosaic()->checkPatternLineFull(row) == false && player->getMosaic()->doesWallRowContainColour(colourSelected, row) == false && diff <= diffOfTilesandFreeSpaces && (player->getMosaic()->getColourOfTilesInPatternLineRow(row) == colourSelected || player->getMosaic()->getColourOfTilesInPatternLineRow(row) == E)) {
-                            rowSelected = row;  
+                            rowSelected = row; 
                             suitableTurnFound = true;                      
                         }
                     }
@@ -354,11 +357,28 @@ void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt
         }
     }
 
+    //If game mode is 2 centre factory, chose the centre factory with the fewest tiles.
+    *AISelectedFactory = 0;
+    if(numFactories > 5) {
+       int factoryWithFewestTiles = 0;
+       unsigned int numberOfTilesInFactory = 100;
+
+        for(int factory = 0; factory < numFactories; ++factory) {
+            if(factories.at(factory)->getIsCentre() == true) {
+                if(factories.at(factory)->getTiles()->size() < numberOfTilesInFactory) {
+                    factoryWithFewestTiles = factory;
+                    numberOfTilesInFactory = factories.at(factory)->getTiles()->size();
+                }
+            }
+        }
+        *AISelectedFactory = factoryWithFewestTiles;        
+    }
+
     *factoryId = factorySelected;
     *row = rowSelected;
     *colourInt = colourSelected;
 
-    //std::cout << "Factory: " << *factoryId << " Row : " << *row << " Colour: " << *colourInt << std::endl;
+    //std::cout << "Centre Factory " << *AISelectedFactory << std::endl;
 }
 
 /*
@@ -383,13 +403,20 @@ void Game::moveTilesFromFactoryToFloorLine(Player* player, int colour, int facto
     }
 }
 
-void Game::moveTilesFromFactoryToCentre(int factoryId, int colour) {
+void Game::moveTilesFromFactoryToCentre(int factoryId, int colour, int AISelectedFactory) {
     int selectedFactory = 0;
-
-    if(numFactories == 6 && factories.at(factoryId)->getIsCentre() == false) {
+    std::cout << "AIFactory: " << AISelectedFactory << std::endl;
+    if(AISelectedFactory == 100 && numFactories == 6 && factories.at(factoryId)->getIsCentre() == false) {
         std::string chosenCentreFactory = "";
         std::cout << "Please select which centre factory you wish to add the tiles to: " << std::endl;
         std::cin >> selectedFactory;       
+
+        if(std::cin.fail()) {
+            std::cout << "Invalid input. Enter a factory ID that corresponds to a centre factory." << std::endl;
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+            moveTilesFromFactoryToCentre(factoryId, colour, AISelectedFactory);
+        }
     }
     
     

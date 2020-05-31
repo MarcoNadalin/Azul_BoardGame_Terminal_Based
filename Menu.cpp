@@ -49,8 +49,34 @@ void Menu::startGame(unsigned int seed) {
     std::cout << "Enter the number of players (2, 3 or 4 players): " << std::endl;
     std::cin >> numPlayers;
 
+    //Check user input is correct
+    if(std::cin.fail()) {
+        std::cout << "Incorrect input entered. Please try again." << std::endl;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+        startGame(seed);
+    } else if (numPlayers < 2 || numPlayers > 4) {
+        std::cout << numPlayers << " players is an invalid number of Players." << std::endl;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+        startGame(seed);
+    }
+
     std::cout << "Enter the number of factories you wish to use (5 or 6):" << std::endl;
     std::cin >> numFactories;
+
+    //check user input is correct
+    if(std::cin.fail()) {
+        std::cout << "Incorrect input entered. Please try again." << std::endl;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+        startGame(seed);
+    } else if (numFactories < 5 || numFactories > 6) {
+        std::cout << numFactories << " is an invalid number of factories." << std::endl;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+        startGame(seed);
+    }
 
     game->startGame(seed, numPlayers, numFactories);
 }
