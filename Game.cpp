@@ -36,7 +36,7 @@ void Game::startGame(unsigned int seed, int numPlayers, int numFactories) {
     //INITIALISE THE PLAYERS
     for(int i = 0; i < numPlayers; i++) {
         std::string name;
-        std::string isAIResponse = "";
+        char isAIResponse = 'n';
 
         //Create the player object with the name selected by the player
         std::cout << "Enter a name for player "<< i + 1 << std::endl;
@@ -45,16 +45,22 @@ void Game::startGame(unsigned int seed, int numPlayers, int numFactories) {
 
         players.insert(players.end(), new Player(i, name));
 
-        //ask if this player object is an AI or not.
+        //User input to ask if player is an AI or not.
         std::cout << "Is this player an AI? (y/n): " << std::endl;
         std::cin >> isAIResponse;
 
-        if(isAIResponse == "y" || isAIResponse == "Y") {
+
+        isAIResponse = std::tolower(isAIResponse);
+        if(isAIResponse == 'y') {
             players.at(i)->setAI(true);
             std::cout << "Player " << name << " has been made an AI." << std::endl;
-        } else if (isAIResponse != "n" || isAIResponse != "N") {
+        } else if (isAIResponse == 'n') {
+            std::cout << "Player " << name << "has been made a human player." << std::endl;
+        } else {
             std::cout << "Input is invalid. Player automatically set as non-ai" << std::endl;
         }
+
+        //end of AI input
     }
 
     //Start the match
@@ -128,17 +134,18 @@ void Game::playerTurn(Player* player) {
     int row;
 
     int AISelectedCentreFactory = 100;
+    bool AICanMakeTurn = false;
 
     
     if(player->isAI()) {
         //Calculate turn if player is AI
-        playerAITurn(player, &factoryId, &row, &colourInt, &AISelectedCentreFactory);
+       AICanMakeTurn = playerAITurn(player, &factoryId, &row, &colourInt, &AISelectedCentreFactory);
     } else {
         //User input if player isnt an AI
         userInputForPlayerTurn(player, &factoryId, &colourInt, &row);
     }    
 
-    if(quit == false){
+    if(quit == false && AICanMakeTurn == true) {
         //Checking if selected values is valid / allowed.
         int freeSpacesOnPatternLinesRow = 0;
         int numTilesOfColourInFactory = factories.at(factoryId)->getNumberTilesOfColour(colourInt);
@@ -281,8 +288,9 @@ void Game::moveTilesFromFactoryToPlayerPatternLine(Player* player, int colour, i
     }
 }
 
-void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt, int* AISelectedFactory) {
+bool Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt, int* AISelectedFactory) {
 
+    bool canMakeTurn = true;
     /*
     * Set values to an unachievable default value. If by the end of the algorithm
     * one of these values is still set to 100, then we know a move hasnt been calculated yet.
@@ -359,6 +367,7 @@ void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt
 
     //If game mode is 2 centre factory, chose the centre factory with the fewest tiles.
     *AISelectedFactory = 0;
+    int numTilesToAddToFloor = 0;
     if(numFactories > 5) {
        int factoryWithFewestTiles = 0;
        unsigned int numberOfTilesInFactory = 100;
@@ -378,7 +387,13 @@ void Game::playerAITurn(Player* player, int* factoryId, int* row, int* colourInt
     *row = rowSelected;
     *colourInt = colourSelected;
 
-    //std::cout << "Centre Factory " << *AISelectedFactory << std::endl;
+    //check if can add to floor line
+    numTilesToAddToFloor = factories.at(factorySelected)->getNumberTilesOfColour(colourSelected);
+    if(numTilesToAddToFloor > player->getMosaic()->numberOfFreeSpacesOnFloorLine()) {
+        canMakeTurn = false;
+    }
+
+    return canMakeTurn;
 }
 
 /*
@@ -641,6 +656,10 @@ void Game::scorePlayers(){
     }
 }
 
+void Game::setQuit(bool quit) {
+    this->quit = quit;
+}
+
 //to implement load for tiles
 void Game::loadGameFile(std::string filename){
     //default file path
@@ -666,7 +685,9 @@ void Game::loadGameFile(std::string filename){
         loadFactory(readFile, lineNumberPtr);
 
         //loads seed
+        std::cout << "Debug1" << std::endl;
         unsigned int seed = std::stoi(getNextLine(readFile, lineNumberPtr));
+        std::cout << "Debug2" << std::endl;
         bag->setSeed(seed);
         bag->randomise();
 
@@ -732,7 +753,7 @@ void Game::saveGameFile(std::string filename){
         //saves factory
         comment = "#Factories";
         writeFile << comment << std::endl;
-        for(int i = 0; i<numFactories; ++i){
+        for(int i = 0; i<NUMFACTORIES; ++i){
             factories.at(i)->saveFactory(writeFile);
         }
 
@@ -836,7 +857,7 @@ void Game::loadPlayer(std::fstream& readFile, unsigned int* lineNumberPtr){
 
 void Game::loadFactory(std::fstream& readFile, unsigned int* lineNumberPtr){
     int count = 0;
-    for(int i = 0; i < numFactories; i++) {
+    for(int i = 0; i < NUMFACTORIES; i++) {
         std::string factoryString = getNextLine(readFile, lineNumberPtr);
         if(factoryString[2] != '_'){
             factories.insert(factories.end(), new Factory(i));

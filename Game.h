@@ -13,9 +13,6 @@
 class Game{
     private:
 
-        
-        //Player* players;
-
         BoxLid* boxLid;
         TileBag* bag;
 
@@ -26,9 +23,9 @@ class Game{
         int numPlayers = 2;
 
         /*
-        * The numbers of players. Set to 5 by default.
+        * The numbers of players. Set to 6 by default.
         */
-        int numFactories = 5;
+        int numFactories = 6;
 
         /*
         * The numbers of colours. Set to 5 by default.
@@ -88,7 +85,7 @@ class Game{
         /*
         * Called each turn for each player.
         */
-        void playerAITurn(Player* player, int* factoryId, int* row, int* colourInt, int* AISelectedFActory);
+        bool playerAITurn(Player* player, int* factoryId, int* row, int* colourInt, int* AISelectedFActory);
 
         /*
         * 
@@ -214,6 +211,8 @@ class Game{
         * @return returns the integer of the colour that the char corresponds to
         */
         int convertCharToColourInt(char c);
+
+        void setQuit(bool quit);
 };
 
 #endif

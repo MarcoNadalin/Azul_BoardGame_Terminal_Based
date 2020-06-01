@@ -46,6 +46,15 @@ void Menu::startGame(unsigned int seed) {
     int numPlayers;
     int numFactories;
 
+    //game->setQuit(false);
+
+    if(this->game == nullptr) {
+        this->game = new Game();
+    } else {
+        delete this->game;
+        this->game = new Game();
+    }
+
     std::cout << "Enter the number of players (2, 3 or 4 players): " << std::endl;
     std::cin >> numPlayers;
 
