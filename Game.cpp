@@ -142,8 +142,9 @@ void Game::playerTurn(Player* player) {
        AICanMakeTurn = playerAITurn(player, &factoryId, &row, &colourInt, &AISelectedCentreFactory);
     } else {
         //User input if player isnt an AI
+        AICanMakeTurn = true;
         userInputForPlayerTurn(player, &factoryId, &colourInt, &row);
-    }    
+    } 
 
     if(quit == false && AICanMakeTurn == true) {
         //Checking if selected values is valid / allowed.
@@ -221,6 +222,7 @@ void Game::moveTileFromPatternLineToWall(int row, Player* player){
 }
 
 void Game::moveTilesFromFactoryToPlayerPatternLine(Player* player, int colour, int factoryId, int row) {
+    std::cout << "move tiles from factory to pattern line" << std::endl;
     int freeSpacesOnPatternLinesRow = player->getMosaic()->numberOfFreeSpacesOnPatternLineRow(row);
     int numTilesOfColourInFactory = factories.at(factoryId)->getNumberTilesOfColour(colour); 
     int freeSpacesOnFloorLine = player->getMosaic()->numberOfFreeSpacesOnFloorLine();  
